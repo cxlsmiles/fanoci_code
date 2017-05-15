@@ -1,0 +1,22 @@
+$prop
+	prop_type = "el" 
+$end
+
+$init
+	h_in = "1 5 7"
+	p_in = "2 6 8"
+$end
+
+$final
+	h_f_min = 12
+	h_f_max = 15
+	p_f_min = 16
+	p_f_max = 0
+$end
+
+$control
+	n_occ = 15
+	prnt = 1
+	gam = "total"
+$end
+
