@@ -6,14 +6,25 @@ module read_hf_data
 
 
     subroutine read_n_mos()
-        integer :: temp
+        integer          :: temp,io
+        character(len=5) :: temp1
+        double precision :: temp2
 
         open(unit=118, file='mocoef.txt')
         read(118,*)temp,n_mo
         close(118)
 
-    end subroutine read_n_mos
+        open(unit=118, file='HForbenergy.txt')
+        temp = 0
+        do
+          read(118,*,iostat=io)n_mo,temp1,temp2
+          if (io/=0) exit
+          temp = temp + 1
+        end do
+        rewind(118)
+        close(118)
 
+    end subroutine read_n_mos
 
 
     subroutine read_input()
