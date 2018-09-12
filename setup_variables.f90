@@ -21,7 +21,7 @@ module setup_variables
 		write(*,'(A21,I5)')" Molecular orbitals: ",n_mo
 	
 		allocate(emo(n_mo))
-		call read_mo_energies()
+		call read_mo_energies(n_mo, emo)
         
         !-----------------------
         ! Two-electron integrals

@@ -1,11 +1,10 @@
 module read_hf_data
-    use globals
-    use strings
     implicit none
     contains
 
 
     subroutine read_n_mos()
+        use globals, only: n_mo
         integer          :: io
         character(len=5) :: temp1
         double precision :: temp2
@@ -22,6 +21,8 @@ module read_hf_data
 
 
     subroutine read_input()
+        use strings
+        use globals
         integer :: funit
         integer :: stat
         integer :: k
@@ -45,6 +46,8 @@ module read_hf_data
         read (funit,nml=control)
         close(funit)
 
+        call check_input_sanity()
+
         delims = ' '
         call parse(hs_in, delims, h_args, n_hs_in)
         call parse(ps_in, delims, p_args, n_ps_in)
@@ -62,15 +65,43 @@ module read_hf_data
     end subroutine
 
 
+    subroutine check_input_sanity()
+        use globals
 
-    subroutine read_mo_energies ()
+        if (p_f_max.gt.n_mo)then
+           write(*,*)'ERROR: Parameter p_f_max cannot be greater than total num. of orbitals.'
+           write(*,*)'p_f_max  n_mo', p_f_max, n_mo
+           stop 1
+        end if
+
+        if (p_f_min.gt.p_f_max.and.p_f_max.ne.0)then
+           write(*,*)'ERROR: p_f_min > p_f_max'
+           stop 1
+        end if
+
+        if (h_f_min.gt.h_f_max)then
+           write(*,*)'ERROR: h_f_min > h_f_max'
+           stop 1
+        end if
+
+        if (p_f_min.lt.h_f_max)then
+           write(*,*)'ERROR: p_f_min < h_f_max'
+           stop 1
+        end if
+
+    end subroutine check_input_sanity
+
+
+
+    subroutine read_mo_energies (numorb, e_mo)
+        integer*8, intent(in) :: numorb
+        double precision, dimension(:), intent(out) :: e_mo
         integer*8 :: i, temp
         character(3) :: sym
 
-
         open(unit=117, file='HForbenergy.txt', status='old', action="read")
-        do i = 1, n_mo
-            read(117,*)temp,sym,emo(i)
+        do i = 1, numorb
+            read(117,*)temp, sym, e_mo(i)
         end do
         close(117)
 
@@ -84,8 +115,8 @@ module read_hf_data
         integer*8 :: i, j
         integer :: io, funit
         double precision :: temp
-        double precision, dimension(n_) :: int2e_
-        int2e(:) = 0.d0
+        double precision, dimension(n_), intent(out) :: int2e_
+        int2e_ = 0.d0
         funit = 119
 
         open(unit=funit, file='moint.txt', status='old', action="read") !, form='unformatted')
