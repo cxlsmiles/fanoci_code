@@ -6,23 +6,19 @@ module read_hf_data
 
 
     subroutine read_n_mos()
-        integer          :: temp,io
+        integer          :: io
         character(len=5) :: temp1
         double precision :: temp2
 
-        open(unit=118, file='mocoef.txt')
-        read(118,*)temp,n_mo
-        close(118)
-
         open(unit=118, file='HForbenergy.txt')
-        temp = 0
         do
           read(118,*,iostat=io)n_mo,temp1,temp2
           if (io/=0) exit
-          temp = temp + 1
         end do
         rewind(118)
         close(118)
+
+        write(*,*)'Total number of orbitals from HForbenergy.txt = ', n_mo
 
     end subroutine read_n_mos
 
