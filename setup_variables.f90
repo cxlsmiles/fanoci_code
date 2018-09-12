@@ -13,10 +13,11 @@ module setup_variables
         integer :: i
 		double precision :: t_in, t_fi
 
+      ! Determine number of orbitals from HForbitals.txt
+      ! it can be modified later manually in input.txt
+		call read_n_mos()
 		call read_input()
 		write(*,'(A25)')" Input successfully read."
-        
-		call read_n_mos()
 		write(*,'(A21,I5)')" Molecular orbitals: ",n_mo
 	
 		allocate(emo(n_mo))

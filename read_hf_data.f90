@@ -10,15 +10,13 @@ module read_hf_data
         character(len=5) :: temp1
         double precision :: temp2
 
-        open(unit=118, file='HForbenergy.txt')
+        open(unit=118, file='HForbenergy.txt', status='old', action="read")
         do
           read(118,*,iostat=io)n_mo,temp1,temp2
           if (io/=0) exit
         end do
         rewind(118)
         close(118)
-
-        write(*,*)'Total number of orbitals from HForbenergy.txt = ', n_mo
 
     end subroutine read_n_mos
 
@@ -36,11 +34,11 @@ module read_hf_data
         namelist /prop/ prop_type
         namelist /init/ hs_in, ps_in
         namelist /final/ h_f_min, h_f_max, p_f_min, p_f_max
-        namelist /control/ n_occ, prnt, gam, moint, eig_thresh
+        namelist /control/ n_occ, prnt, gam, moint, eig_thresh, n_mo
 
         funit = 139
 
-        open (funit, file='input.txt',status='old')
+        open (funit, file='input.txt',status='old', action="read")
         read (funit,nml=prop)
         read (funit,nml=init)
         read (funit,nml=final)
@@ -70,7 +68,7 @@ module read_hf_data
         character(3) :: sym
 
 
-        open(unit=117, file='HForbenergy.txt')
+        open(unit=117, file='HForbenergy.txt', status='old', action="read")
         do i = 1, n_mo
             read(117,*)temp,sym,emo(i)
         end do
@@ -83,19 +81,27 @@ module read_hf_data
 
     subroutine read_2e_integrals (n_, int2e_)
         integer*8, intent(in) :: n_
-        integer*8 :: i
-        integer*8 :: j
+        integer*8 :: i, j
+        integer :: io, funit
         double precision :: temp
         double precision, dimension(n_) :: int2e_
         int2e(:) = 0.d0
+        funit = 119
 
-        open(unit=119, file='moint.txt') !, form='unformatted')
-        do i = 1, n_
-            read(119,*,end=100)j,temp
+        open(unit=funit, file='moint.txt', status='old', action="read") !, form='unformatted')
+        do
+            read(funit, *, iostat = io)j, temp
+            if (io.gt.0)then
+               write(*,*)'ERROR reading file moint.txt. error code = ', io
+               stop 1
+            else if (io.lt.0)then ! EOF condition
+               exit
+            end if
+            ! Automatically skip unnecessary integrals with big index
+            if (j.gt.n_) cycle
             int2e_(j) = temp
         end do
-        100 int2e_(j) = temp
-        close(119)
+        close(funit)
 
     end subroutine read_2e_integrals
 
