@@ -84,33 +84,6 @@ module read_hf_data
 
 
 
-    subroutine get_number_2e_integrals ()
-        character(len=1024) :: temp
-        double precision :: a
-        integer*8 :: count_2eint
-        integer :: funit
-
-        ! temp = "tail -n 1 moint.txt > temp.txt"
-
-        ! call system(temp)
-        ! funit = 238
-        ! open(funit, file="temp.txt")
-        ! read(funit,*)n_int2e, a
-        ! close(funit)
-!        funit = 529
-!        open(funit, file="moint.txt")
-!        do
-!            read(funit,*,err = 100)
-!            count_2eint = count_2eint + 1
-!        end do
-!        100 write(*,*)"n_2eint =",count_2eint
-!        close(funit)
-!
-!        call system("rm temp.txt")
-
-    end subroutine get_number_2e_integrals
-
-
 
     subroutine read_2e_integrals (n_, int2e_)
         integer*8, intent(in) :: n_
@@ -130,21 +103,6 @@ module read_hf_data
 
     end subroutine read_2e_integrals
 
-
-
-    subroutine read_E0 ()
-        character(len=1024) :: command, t1, t2, t3, t4, t5
-
-        command="grep 'FINAL RHF ENERGY IS' hf.out > en.txt"
-
-        call system(command)
-        call system("grep 'FINAL RHF ENERGY IS' hf.out > en.txt")
-
-        open(unit=125, file='en.txt')
-        read(125,*)t1, t2, t3, t4, E_0, t5
-        close(125)
-
-    end subroutine read_E0
 
 
 end module read_hf_data
