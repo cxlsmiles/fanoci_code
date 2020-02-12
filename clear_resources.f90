@@ -20,10 +20,14 @@ module clear_resources
         deallocate(CI_matrix)
         deallocate(CI_init_eigval)
         deallocate(CI_eigval)
-        deallocate(mat_2h_s)
-        deallocate(mat_2h_t)
-        deallocate(mat_2h_s_eigval)
-        deallocate(mat_2h_t_eigval)
+        if(gam.eq.'singlet'.or.gam.eq.'all')then
+            deallocate(mat_2h_s)
+            deallocate(mat_2h_s_eigval)
+        end if
+        if(gam.eq.'triplet'.or.gam.eq.'all')then
+            deallocate(mat_2h_t)
+            deallocate(mat_2h_t_eigval)
+        end if
         deallocate(mat_2h)
     end subroutine clear_res
 

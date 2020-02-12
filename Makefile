@@ -111,7 +111,7 @@
 #F90=gfortran
 F90=ifort
 LIBS = -mkl #/san/local/lib/liblapack++.a 
-FLAGS = -i8 -O3 -g -traceback -check bounds
+FLAGS = -i8 -O3 -traceback -check bounds # -O3
 #FLAGS = -O3 -ftraceback #-check bounds
 # -------------------End-macro-Defs---------------------------
 
