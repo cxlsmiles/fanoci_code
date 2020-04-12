@@ -29,7 +29,7 @@ program fanoci_main
      !----------------------------------
      ! 2h CI matrix
      !----------------------------------
-     if(gam.eq.'singlet'.or.gam.eq.'all')then
+     if(gam.eq.'singlet'.or.gam.eq.'total')then
          ci_mat_2h_s_size = n_config + n_ov
          allocate(mat_2h_s(ci_mat_2h_s_size,ci_mat_2h_s_size))
          allocate(mat_2h_s_eigval(ci_mat_2h_s_size)) 
@@ -38,7 +38,7 @@ program fanoci_main
          call RealSymm(mat_2h_s, ci_mat_2h_s_size, mat_2h_s_eigval)
      end if
 
-     if(gam.eq.'triplet'.or.gam.eq.'all')then
+     if(gam.eq.'triplet'.or.gam.eq.'total')then
          ci_mat_2h_t_size = n_config
          allocate(mat_2h_t(ci_mat_2h_t_size,ci_mat_2h_t_size))
          allocate(mat_2h_t_eigval(n_config))
@@ -52,7 +52,7 @@ program fanoci_main
      mat_2h(:,:) = 0.0d0
      mat_2h_eigval(:) = 0.0d0
 
-     if(gam.eq.'all')then
+     if(gam.eq.'total')then
          mat_2h(1:ci_mat_2h_s_size, 1:ci_mat_2h_s_size) = mat_2h_s
          mat_2h((ci_mat_2h_s_size+1):, (ci_mat_2h_s_size+1):) = mat_2h_t
 
@@ -82,7 +82,7 @@ program fanoci_main
         h_in = holes_arr(1)
         eps_h_in = emo(h_in)
         
-        write(file_gamma,'(A11,A3,A1,I1,A4)') "Couplings.all.",gam,".",h_in,".txt"
+        write(file_gamma,'(A10,A3,A1,I1,A4)') "Couplings.",gam,".",h_in,".txt"
         open(251, file=file_gamma)
         write(251,*) ci_mat_size*(p_f_max - p_f_min + 1)
 
@@ -190,7 +190,7 @@ program fanoci_main
         
     else if (prop_type == "pol") then
 
-        write(file_gamma,'(A11,A3,A4)') "Couplings.all.",gam,".txt"
+        write(file_gamma,'(A10,A3,A4)') "Couplings.", gam, ".txt"
         open(251, file=file_gamma)
         write(251,*) ci_mat_size*(p_f_max - p_f_min + 1)*ci_mat_in_size
 
@@ -241,7 +241,6 @@ program fanoci_main
     close(718)
     close(251)
     end if
-	
 	call cpu_time(prog_end)
 
     write(*,'(A15,F8.2,A15)')"Diagonalization time ", (prog_end - t_2eint_fi)/(p_f_max - p_f_min + 1), " s / iteration "
