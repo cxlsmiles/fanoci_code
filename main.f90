@@ -6,8 +6,6 @@ program fanoci_main
      use clear_resources
      implicit none
      
-     
-     
      integer :: i, a, j, count, m, temp_int, ov1, ov2
      double precision :: eps_h_in, en_e
      character(len=100) :: file_gamma
@@ -16,13 +14,11 @@ program fanoci_main
      double precision, dimension(:), allocatable :: vec_ci_coupling
      double precision, dimension(:), allocatable :: temp_vec
      double precision, dimension(:,:), allocatable :: mat_prod
-
      !
      !   Time variables
      !
      double precision :: prog_start, prog_end, t_2eint_in, t_2eint_fi
      double precision :: it_begin, it_end, it_time
-
 
      call setup ()
      
@@ -68,8 +64,6 @@ program fanoci_main
 
      call print_2h_matrix()
 
-
-    !---------------------------------
     !---------------------------------
     ! End of 2h CI matrix diagonalisation
     !---------------------------------
@@ -237,16 +231,15 @@ program fanoci_main
             write(*,'(A5,I3,A6,F10.5,A3)')"Step ", count, " took ", it_time, " s."
             count = count + 1
        end do    
-	
-    close(718)
-    close(251)
+
+       close(718)
+       close(251)
     end if
-	call cpu_time(prog_end)
+    call cpu_time(prog_end)
 
     write(*,'(A15,F8.2,A15)')"Diagonalization time ", (prog_end - t_2eint_fi)/(p_f_max - p_f_min + 1), " s / iteration "
     write(*,'(A15,F8.2,A2)')"Execution time ", prog_end - prog_start, " s"
 
-    write(*,*)"THE END! :)"
-	call clear_res()
-	
+    write(*,*)"(-: THE END! :-)"
+    call clear_res()
 end program fanoci_main

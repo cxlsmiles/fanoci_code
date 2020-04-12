@@ -1,22 +1,25 @@
 module read_hf_data
     implicit none
+    character(len=*), parameter :: HF_ENERGY_FILE = "HForbenergy.txt"
     contains
 
-
+    ! TODO: Rewrite as a function returning number of MOs
+    ! TODO: Remove n_mo from globals
     subroutine read_n_mos()
         use globals, only: n_mo
-        integer          :: io
+        integer          :: io, orbindex
         character(len=5) :: temp1
         double precision :: temp2
 
-        open(unit=118, file='HForbenergy.txt', status='old', action="read")
+        open(unit=118, file=HF_ENERGY_FILE, status='old', action="read")
         do
-          read(118,*,iostat=io)n_mo,temp1,temp2
-          if (io/=0) exit
+          read(118,*,iostat=io)orbindex, temp1, temp2
+          if (io.lt.0) exit
         end do
         rewind(118)
         close(118)
 
+        n_mo = orbindex
     end subroutine read_n_mos
 
 
@@ -99,15 +102,12 @@ module read_hf_data
         integer*8 :: i, temp
         character(3) :: sym
 
-        open(unit=117, file='HForbenergy.txt', status='old', action="read")
+        open(unit=117, file=HF_ENERGY_FILE, status='old', action='read')
         do i = 1, numorb
             read(117,*)temp, sym, e_mo(i)
         end do
         close(117)
-
     end subroutine read_mo_energies
-
-
 
 
     subroutine read_2e_integrals (n_, int2e_)
@@ -133,9 +133,6 @@ module read_hf_data
             int2e_(j) = temp
         end do
         close(funit)
-
     end subroutine read_2e_integrals
-
-
 
 end module read_hf_data
