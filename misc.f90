@@ -95,13 +95,11 @@ module misc
         end do
         close(299)
 
-
         open(unit=312,file="energies.2h.txt")
         do i = 1, ci_mat_size
             write(312, '(F20.15)')mat_2h_eigval(i)
         end do
         close(312)
-
     end subroutine print_2h_matrix
 
     subroutine print_2h_contributions (mat_prod,k)
@@ -134,8 +132,5 @@ module misc
             end do
         end do
 
-
     end subroutine print_2h_contributions
-   
-
 end module misc

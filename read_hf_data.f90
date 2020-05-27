@@ -1,33 +1,31 @@
 module read_hf_data
-    use globals
-    use strings
     implicit none
+    character(len=*), parameter :: HF_ENERGY_FILE = "HForbenergy.txt"
     contains
 
-
+    ! TODO: Rewrite as a function returning number of MOs
+    ! TODO: Remove n_mo from globals
     subroutine read_n_mos()
-        integer          :: temp,io
+        use globals, only: n_mo
+        integer          :: io, orbindex
         character(len=5) :: temp1
         double precision :: temp2
 
-        open(unit=118, file='mocoef.txt')
-        read(118,*)temp,n_mo
-        close(118)
-
-        open(unit=118, file='HForbenergy.txt')
-        temp = 0
+        open(unit=118, file=HF_ENERGY_FILE, status='old', action="read")
         do
-          read(118,*,iostat=io)n_mo,temp1,temp2
-          if (io/=0) exit
-          temp = temp + 1
+          read(118,*,iostat=io)orbindex, temp1, temp2
+          if (io.lt.0) exit
         end do
         rewind(118)
         close(118)
 
+        n_mo = orbindex
     end subroutine read_n_mos
 
 
     subroutine read_input()
+        use strings
+        use globals
         integer :: funit
         integer :: stat
         integer :: k
@@ -40,16 +38,18 @@ module read_hf_data
         namelist /prop/ prop_type
         namelist /init/ hs_in, ps_in
         namelist /final/ h_f_min, h_f_max, p_f_min, p_f_max
-        namelist /control/ n_occ, prnt, gam, moint, eig_thresh
+        namelist /control/ n_occ, prnt, gam, moint, eig_thresh, n_mo
 
         funit = 139
 
-        open (funit, file='input.txt',status='old')
+        open (funit, file='input.txt',status='old', action="read")
         read (funit,nml=prop)
         read (funit,nml=init)
         read (funit,nml=final)
         read (funit,nml=control)
         close(funit)
+
+        call check_input_sanity()
 
         delims = ' '
         call parse(hs_in, delims, h_args, n_hs_in)
@@ -68,83 +68,71 @@ module read_hf_data
     end subroutine
 
 
+    subroutine check_input_sanity()
+        use globals
 
-    subroutine read_mo_energies ()
+        if (p_f_max.gt.n_mo)then
+           write(*,*)'ERROR: Parameter p_f_max cannot be greater than total num. of orbitals.'
+           write(*,*)'p_f_max  n_mo', p_f_max, n_mo
+           stop 1
+        end if
+
+        if (p_f_min.gt.p_f_max.and.p_f_max.ne.0)then
+           write(*,*)'ERROR: p_f_min > p_f_max'
+           stop 1
+        end if
+
+        if (h_f_min.gt.h_f_max)then
+           write(*,*)'ERROR: h_f_min > h_f_max'
+           stop 1
+        end if
+
+        if (p_f_min.lt.h_f_max)then
+           write(*,*)'ERROR: p_f_min < h_f_max'
+           stop 1
+        end if
+
+    end subroutine check_input_sanity
+
+
+
+    subroutine read_mo_energies (numorb, e_mo)
+        integer*8, intent(in) :: numorb
+        double precision, dimension(:), intent(out) :: e_mo
         integer*8 :: i, temp
         character(3) :: sym
 
-
-        open(unit=117, file='HForbenergy.txt')
-        do i = 1, n_mo
-            read(117,*)temp,sym,emo(i)
+        open(unit=117, file=HF_ENERGY_FILE, status='old', action='read')
+        do i = 1, numorb
+            read(117,*)temp, sym, e_mo(i)
         end do
         close(117)
-
     end subroutine read_mo_energies
-
-
-
-    subroutine get_number_2e_integrals ()
-        character(len=1024) :: temp
-        double precision :: a
-        integer*8 :: count_2eint
-        integer :: funit
-
-        ! temp = "tail -n 1 moint.txt > temp.txt"
-
-        ! call system(temp)
-        ! funit = 238
-        ! open(funit, file="temp.txt")
-        ! read(funit,*)n_int2e, a
-        ! close(funit)
-!        funit = 529
-!        open(funit, file="moint.txt")
-!        do
-!            read(funit,*,err = 100)
-!            count_2eint = count_2eint + 1
-!        end do
-!        100 write(*,*)"n_2eint =",count_2eint
-!        close(funit)
-!
-!        call system("rm temp.txt")
-
-    end subroutine get_number_2e_integrals
-
 
 
     subroutine read_2e_integrals (n_, int2e_)
         integer*8, intent(in) :: n_
-        integer*8 :: i
-        integer*8 :: j
+        integer*8 :: i, j
+        integer :: io, funit
         double precision :: temp
-        double precision, dimension(n_) :: int2e_
-        int2e(:) = 0.d0
+        double precision, dimension(n_), intent(out) :: int2e_
+        int2e_ = 0.d0
+        funit = 119
 
-        open(unit=119, file='moint.txt') !, form='unformatted')
-        do i = 1, n_
-            read(119,*,end=100)j,temp
+        open(unit=funit, file='moint.txt', status='old', action="read") !, form='unformatted')
+        do
+            read(funit, *, iostat = io)j, temp
+            if (io.gt.0)then
+               write(*,*)'ERROR reading file moint.txt. error code = ', io
+               stop 1
+            else if (io.lt.0)then ! EOF condition
+               exit
+            end if
+            ! Automatically skip unnecessary integrals with big index
+            if (j.gt.n_) cycle
             int2e_(j) = temp
         end do
-        100 int2e_(j) = temp
-        close(119)
-
+        close(funit)
     end subroutine read_2e_integrals
-
-
-
-    subroutine read_E0 ()
-        character(len=1024) :: command, t1, t2, t3, t4, t5
-
-        command="grep 'FINAL RHF ENERGY IS' hf.out > en.txt"
-
-        call system(command)
-        call system("grep 'FINAL RHF ENERGY IS' hf.out > en.txt")
-
-        open(unit=125, file='en.txt')
-        read(125,*)t1, t2, t3, t4, E_0, t5
-        close(125)
-
-    end subroutine read_E0
-
 
 end module read_hf_data

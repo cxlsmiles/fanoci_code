@@ -41,15 +41,15 @@ module coupling
             do i = 1, n_ov
                coupling_arr_el(counter) = mat_el_1h_2h1p_sII(h_in, i + h_f_min-1, k)
                write(config_2hnp_str(counter),'(A1,I3,A1,I3,A1,I3,A3)')"|",i+h_f_min-1, ",",i+h_f_min-1,",", k," s>"
-          counter = counter + 1
-       end do
+               counter = counter + 1
+            end do
         
-       do i = 1, n_config
-          coupling_arr_el(counter) = mat_el_1h_2h1p_t(h_in, config_2h(i,1), config_2h(i, 2), k)
-           write(config_2hnp_str(counter),'(A1,I3,A1,I3,A1,I3,A3)')"|",config_2h(i, 1), ",",config_2h(i, 2),",", k," t>"
-           counter = counter + 1
-       end do
-       end if
+            do i = 1, n_config
+               coupling_arr_el(counter) = mat_el_1h_2h1p_t(h_in, config_2h(i,1), config_2h(i, 2), k)
+               write(config_2hnp_str(counter),'(A1,I3,A1,I3,A1,I3,A3)')"|",config_2h(i, 1), ",",config_2h(i, 2),",", k," t>"
+               counter = counter + 1
+            end do
+        end if
     
     else if (prop_type == "pol") then
     

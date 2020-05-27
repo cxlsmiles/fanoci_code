@@ -6,72 +6,77 @@ program fanoci_main
      use clear_resources
      implicit none
      
-     
-     
      integer :: i, a, j, count, m, temp_int, ov1, ov2
-     double precision :: eps_h_in, eps_a, en_e
+     double precision :: eps_h_in, en_e
      character(len=100) :: file_gamma
      double precision, dimension(:), allocatable :: eigval_temp
      double precision, dimension(:), allocatable :: vec_2h
      double precision, dimension(:), allocatable :: vec_ci_coupling
      double precision, dimension(:), allocatable :: temp_vec
      double precision, dimension(:,:), allocatable :: mat_prod
-
      !
      !   Time variables
      !
      double precision :: prog_start, prog_end, t_2eint_in, t_2eint_fi
      double precision :: it_begin, it_end, it_time
 
-
      call setup ()
      
      !----------------------------------
      ! 2h CI matrix
      !----------------------------------
-     ci_mat_2h_s_size = n_config + n_ov
-     allocate(mat_2h_s(ci_mat_2h_s_size,ci_mat_2h_s_size))
-     allocate(mat_2h_s_eigval(ci_mat_2h_s_size)) 
+     if(gam.eq.'singlet'.or.gam.eq.'total')then
+         ci_mat_2h_s_size = n_config + n_ov
+         allocate(mat_2h_s(ci_mat_2h_s_size,ci_mat_2h_s_size))
+         allocate(mat_2h_s_eigval(ci_mat_2h_s_size)) 
      
-     call build_ci2hmatrix(0, mat_2h_s, ci_mat_2h_s_size)
+         call build_ci2hmatrix(0, mat_2h_s, ci_mat_2h_s_size)
+         call RealSymm(mat_2h_s, ci_mat_2h_s_size, mat_2h_s_eigval)
+     end if
 
-     call RealSymm(mat_2h_s, ci_mat_2h_s_size, mat_2h_s_eigval)
+     if(gam.eq.'triplet'.or.gam.eq.'total')then
+         ci_mat_2h_t_size = n_config
+         allocate(mat_2h_t(ci_mat_2h_t_size,ci_mat_2h_t_size))
+         allocate(mat_2h_t_eigval(n_config))
 
-     ci_mat_2h_t_size = n_config
-     allocate(mat_2h_t(ci_mat_2h_t_size,ci_mat_2h_t_size))
-     allocate(mat_2h_t_eigval(n_config))
-
-     call build_ci2hmatrix(1, mat_2h_t, ci_mat_2h_t_size)
-     call RealSymm(mat_2h_t, ci_mat_2h_t_size, mat_2h_t_eigval)
+         call build_ci2hmatrix(1, mat_2h_t, ci_mat_2h_t_size)
+         call RealSymm(mat_2h_t, ci_mat_2h_t_size, mat_2h_t_eigval)
+     end if
 
      allocate(mat_2h(ci_mat_size,ci_mat_size))
      allocate(mat_2h_eigval(ci_mat_size))
      mat_2h(:,:) = 0.0d0
+     mat_2h_eigval(:) = 0.0d0
 
-     mat_2h(1:(n_config+n_ov), 1:(n_config+n_ov)) = mat_2h_s
-     mat_2h((n_config+n_ov+1):, (n_config+n_ov+1):) = mat_2h_t
+     if(gam.eq.'total')then
+         mat_2h(1:ci_mat_2h_s_size, 1:ci_mat_2h_s_size) = mat_2h_s
+         mat_2h((ci_mat_2h_s_size+1):, (ci_mat_2h_s_size+1):) = mat_2h_t
 
-     mat_2h_eigval(1:(n_config+n_ov)) = mat_2h_s_eigval
-     mat_2h_eigval((n_config+n_ov+1):) = mat_2h_t_eigval
+         mat_2h_eigval(1:ci_mat_2h_s_size) = mat_2h_s_eigval
+         mat_2h_eigval((ci_mat_2h_s_size+1):) = mat_2h_t_eigval
+     else if(gam.eq.'singlet')then
+         mat_2h = mat_2h_s
+         mat_2h_eigval = mat_2h_s_eigval
+     else if(gam.eq.'triplet')then
+         mat_2h = mat_2h_t
+         mat_2h_eigval = mat_2h_t_eigval
+     end if
 
+     call print_2h_matrix()
 
-     call print_2h_matrix ()
-
-
-    !---------------------------------
     !---------------------------------
     ! End of 2h CI matrix diagonalisation
     !---------------------------------
 
     if (prop_type == "el") then
         open(unit=718, file="plot_all.dat")
-        open(unit=228, file="ww_coupling_matel.dat")
-        write(228,*) ci_mat_size*(p_f_max - p_f_min + 1)
+        !open(unit=228, file="ww_coupling_matel.dat")
+        !write(228,*) ci_mat_size*(p_f_max - p_f_min + 1)
 
         h_in = holes_arr(1)
         eps_h_in = emo(h_in)
         
-        write(file_gamma,'(A11,A3,A1,I1,A4)') "Couplings.all.",gam,".",h_in,".txt"
+        write(file_gamma,'(A10,A3,A1,I1,A4)') "Couplings.",gam,".",h_in,".txt"
         open(251, file=file_gamma)
         write(251,*) ci_mat_size*(p_f_max - p_f_min + 1)
 
@@ -91,8 +96,6 @@ program fanoci_main
         do a = p_f_min, p_f_max
             call cpu_time(it_begin)
             
-            eps_a = emo(a)
-
             call build_cimatrix(a)
 
             call RealSymm(CI_matrix, ci_mat_size, CI_eigval)
@@ -181,7 +184,7 @@ program fanoci_main
         
     else if (prop_type == "pol") then
 
-        write(file_gamma,'(A11,A3,A4)') "Couplings.all.",gam,".txt"
+        write(file_gamma,'(A10,A3,A4)') "Couplings.", gam, ".txt"
         open(251, file=file_gamma)
         write(251,*) ci_mat_size*(p_f_max - p_f_min + 1)*ci_mat_in_size
 
@@ -228,17 +231,15 @@ program fanoci_main
             write(*,'(A5,I3,A6,F10.5,A3)')"Step ", count, " took ", it_time, " s."
             count = count + 1
        end do    
-	
-    close(718)
-    close(251)
+
+       close(718)
+       close(251)
     end if
-	
-	call cpu_time(prog_end)
+    call cpu_time(prog_end)
 
     write(*,'(A15,F8.2,A15)')"Diagonalization time ", (prog_end - t_2eint_fi)/(p_f_max - p_f_min + 1), " s / iteration "
     write(*,'(A15,F8.2,A2)')"Execution time ", prog_end - prog_start, " s"
 
-    write(*,*)"THE END! :)"
-	call clear_res()
-	
+    write(*,*)"(-: THE END! :-)"
+    call clear_res()
 end program fanoci_main
